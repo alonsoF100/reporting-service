@@ -4,6 +4,7 @@ go 1.25.5
 
 require (
 	github.com/Masterminds/squirrel v1.5.4
+	github.com/go-chi/chi/v5 v5.2.5
 	github.com/jackc/pgx/v5 v5.8.0
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/pressly/goose/v3 v3.26.0
