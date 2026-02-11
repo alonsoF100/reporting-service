@@ -278,14 +278,14 @@ func (s *Scanner) generatePDF(unitGUID string, messages []models.DeviceMessage, 
 
 	// Добавляем шрифт с поддержкой кириллицы (DejaVu)
 	pdf.AddUTF8Font("DejaVu", "", "fonts/DejaVuSans.ttf")
-	pdf.SetFont("DejaVu", "", 12)
+	pdf.AddUTF8Font("DejaVuBold", "", "fonts/DejaVuSans-Bold.ttf")
 
-	// Заголовок
-	pdf.SetFont("DejaVu", "B", 16)
+	// Заголовок - жирный шрифт
+	pdf.SetFont("DejaVuBold", "", 16)
 	pdf.Cell(0, 10, "Отчет по устройству")
 	pdf.Ln(15)
 
-	// Информация об устройстве
+	// Информация об устройстве - обычный шрифт
 	pdf.SetFont("DejaVu", "", 11)
 	pdf.Cell(0, 7, "Unit GUID: "+unitGUID)
 	pdf.Ln(8)
@@ -301,8 +301,8 @@ func (s *Scanner) generatePDF(unitGUID string, messages []models.DeviceMessage, 
 	pdf.Cell(0, 7, "Дата отчета: "+time.Now().Format("02.01.2006 15:04:05"))
 	pdf.Ln(15)
 
-	// Таблица сообщений
-	pdf.SetFont("DejaVu", "B", 10)
+	// Заголовки таблицы - жирный
+	pdf.SetFont("DejaVuBold", "", 10)
 	pdf.CellFormat(15, 7, "№", "1", 0, "C", false, 0, "")
 	pdf.CellFormat(70, 7, "Сообщение", "1", 0, "C", false, 0, "")
 	pdf.CellFormat(30, 7, "Класс", "1", 0, "C", false, 0, "")
@@ -310,11 +310,11 @@ func (s *Scanner) generatePDF(unitGUID string, messages []models.DeviceMessage, 
 	pdf.CellFormat(55, 7, "Адрес", "1", 0, "C", false, 0, "")
 	pdf.Ln(-1)
 
-	// Данные
+	// Данные - обычный шрифт
 	pdf.SetFont("DejaVu", "", 9)
 	for i, msg := range messages {
-		if i >= 30 { // Ограничим до 30 строк
-			pdf.SetFont("DejaVu", "I", 9)
+		if i >= 30 {
+			pdf.SetFont("DejaVu", "I", 9) // курсив
 			pdf.CellFormat(0, 7, "... и еще "+fmt.Sprint(len(messages)-30)+" сообщений", "", 0, "L", false, 0, "")
 			break
 		}

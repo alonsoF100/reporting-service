@@ -20,6 +20,8 @@ COPY --from=builder /app/config.yaml .
 
 COPY --from=builder /app/migrations ./migrations
 
+COPY --from=builder /app/fonts ./fonts
+
 EXPOSE 8080
 
 CMD ["./reporting-service"]

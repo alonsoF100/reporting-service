@@ -21,6 +21,10 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
+    volumes:
+      - ./input:/app/input      # монтируем локальную input папку
+      - ./output:/app/output    # монтируем локальную output папку
+      - ./fonts:/app/fonts      # монтируем шрифты
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432
