@@ -11,6 +11,7 @@ import (
 	"github.com/alonsoF100/reporting-service/internal/config"
 	"github.com/alonsoF100/reporting-service/internal/models"
 	"github.com/alonsoF100/reporting-service/internal/parser"
+	"github.com/jung-kurt/gofpdf"
 )
 
 type Repository interface {
@@ -269,18 +270,73 @@ func (s *Scanner) processFile(ctx context.Context, filePath, fileName string) er
 	return nil
 }
 
-// generatePDF - временная заглушка для генерации PDF
+// generatePDF - генерирует реальный PDF с данными устройства
 func (s *Scanner) generatePDF(unitGUID string, messages []models.DeviceMessage, outputPath string) error {
-	// TODO: Реализовать генерацию PDF
-	f, err := os.Create(outputPath)
-	if err != nil {
-		return err
+	// Создаем PDF
+	pdf := gofpdf.New("P", "mm", "A4", "")
+	pdf.AddPage()
+
+	// Добавляем шрифт с поддержкой кириллицы (DejaVu)
+	pdf.AddUTF8Font("DejaVu", "", "fonts/DejaVuSans.ttf")
+	pdf.SetFont("DejaVu", "", 12)
+
+	// Заголовок
+	pdf.SetFont("DejaVu", "B", 16)
+	pdf.Cell(0, 10, "Отчет по устройству")
+	pdf.Ln(15)
+
+	// Информация об устройстве
+	pdf.SetFont("DejaVu", "", 11)
+	pdf.Cell(0, 7, "Unit GUID: "+unitGUID)
+	pdf.Ln(8)
+
+	if len(messages) > 0 {
+		pdf.Cell(0, 7, "Инвентарный номер: "+messages[0].Invid)
+		pdf.Ln(8)
 	}
-	defer f.Close()
 
-	_, err = f.WriteString(fmt.Sprintf("PDF Report for device %s\n", unitGUID))
-	_, err = f.WriteString(fmt.Sprintf("Total messages: %d\n", len(messages)))
-	_, err = f.WriteString(fmt.Sprintf("Generated at: %s\n", time.Now().Format(time.RFC3339)))
+	pdf.Cell(0, 7, "Всего сообщений: "+fmt.Sprint(len(messages)))
+	pdf.Ln(8)
 
-	return err
+	pdf.Cell(0, 7, "Дата отчета: "+time.Now().Format("02.01.2006 15:04:05"))
+	pdf.Ln(15)
+
+	// Таблица сообщений
+	pdf.SetFont("DejaVu", "B", 10)
+	pdf.CellFormat(15, 7, "№", "1", 0, "C", false, 0, "")
+	pdf.CellFormat(70, 7, "Сообщение", "1", 0, "C", false, 0, "")
+	pdf.CellFormat(30, 7, "Класс", "1", 0, "C", false, 0, "")
+	pdf.CellFormat(20, 7, "Уровень", "1", 0, "C", false, 0, "")
+	pdf.CellFormat(55, 7, "Адрес", "1", 0, "C", false, 0, "")
+	pdf.Ln(-1)
+
+	// Данные
+	pdf.SetFont("DejaVu", "", 9)
+	for i, msg := range messages {
+		if i >= 30 { // Ограничим до 30 строк
+			pdf.SetFont("DejaVu", "I", 9)
+			pdf.CellFormat(0, 7, "... и еще "+fmt.Sprint(len(messages)-30)+" сообщений", "", 0, "L", false, 0, "")
+			break
+		}
+
+		// Обрезаем длинные строки
+		text := msg.MessageText
+		if len(text) > 30 {
+			text = text[:27] + "..."
+		}
+
+		addr := msg.Address
+		if len(addr) > 25 {
+			addr = addr[:22] + "..."
+		}
+
+		pdf.CellFormat(15, 7, fmt.Sprint(i+1), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(70, 7, text, "1", 0, "L", false, 0, "")
+		pdf.CellFormat(30, 7, msg.MessageClass, "1", 0, "L", false, 0, "")
+		pdf.CellFormat(20, 7, fmt.Sprint(msg.Level), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(55, 7, addr, "1", 0, "L", false, 0, "")
+		pdf.Ln(-1)
+	}
+
+	return pdf.OutputFileAndClose(outputPath)
 }
