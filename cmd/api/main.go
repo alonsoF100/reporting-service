@@ -8,6 +8,7 @@ import (
 	"github.com/alonsoF100/reporting-service/internal/config"
 	"github.com/alonsoF100/reporting-service/internal/logger"
 	"github.com/alonsoF100/reporting-service/internal/parser"
+	_ "github.com/alonsoF100/reporting-service/migrations/postgres" // миграции
 )
 
 func main() {
