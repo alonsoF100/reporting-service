@@ -1,0 +1,25 @@
+database:
+  host: postgres
+  port: 5432
+  user: postgres
+  password: postgres
+  name: reporting-service
+  ssl_mode: disable
+
+server:
+  port: 8080
+  read_timeout: "5s"
+  write_timeout: "10s"
+  idle_timeout: "10s"
+
+logger:
+  level: "info"
+  json: false
+
+migrations:
+  dir: "migrations/postgres"
+
+aapplication:
+  input_dir: "input"
+  output_dir: "output"
+  scan_period: "30s"
