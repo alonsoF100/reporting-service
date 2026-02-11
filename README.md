@@ -34,6 +34,35 @@ curl "http://localhost:8080/api/v1/devices/01749246-960c-5832-b2aa-ed2b4da5e137?
 ls -la output/
 ```
 
+## 🧪 Тестирование
+
+**1. Подними PostgreSQL:**
+```bash
+docker-compose up -d
+```
+
+**2. Проверь, что БД готова:**
+```bash
+docker-compose logs postgres | grep "ready"
+```
+
+**3. Запусти тест:**
+```bash
+go test -v ./internal/test
+```
+
+**4. Останови БД:**
+```bash
+docker-compose down
+```
+
+**Ожидаемый результат:**
+```
+--- PASS: TestIntegration
+--- PASS: TestParserIntegration
+PASS
+```
+
 ## 📁 Структура проекта
 
 ```

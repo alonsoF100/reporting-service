@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
 
 	"github.com/alonsoF100/reporting-service/internal/config"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -66,23 +67,34 @@ func NewPool(cfg *config.Config) (*pgxpool.Pool, error) {
 
 	logger.Info("database connection established")
 
-	// Миграции
-	logger.Info("running database migrations",
-		slog.String("migrations_dir", cfg.Migration.Dir))
+	// Миграции - только если директория указана и существует
+	if cfg.Migration.Dir != "" {
+		if _, err := os.Stat(cfg.Migration.Dir); err == nil {
+			logger.Info("running database migrations",
+				slog.String("migrations_dir", cfg.Migration.Dir))
 
-	connConfig := poolConfig.ConnConfig
-	db := stdlib.OpenDB(*connConfig)
+			connConfig := poolConfig.ConnConfig
+			db := stdlib.OpenDB(*connConfig)
 
-	if err := goose.Up(db, cfg.Migration.Dir); err != nil {
-		logger.Error("failed to run migrations",
-			slog.String("error", err.Error()),
-			slog.String("migrations_dir", cfg.Migration.Dir),
-		)
-		return nil, fmt.Errorf("%s: migrations failed: %w", op, err)
+			if err := goose.Up(db, cfg.Migration.Dir); err != nil {
+				logger.Error("failed to run migrations",
+					slog.String("error", err.Error()),
+					slog.String("migrations_dir", cfg.Migration.Dir),
+				)
+				return nil, fmt.Errorf("%s: migrations failed: %w", op, err)
+			}
+
+			logger.Info("migrations completed successfully",
+				slog.String("migrations_dir", cfg.Migration.Dir))
+		} else {
+			logger.Warn("migrations directory does not exist, skipping",
+				slog.String("migrations_dir", cfg.Migration.Dir),
+				slog.String("error", err.Error()),
+			)
+		}
+	} else {
+		logger.Info("migrations directory not specified, skipping")
 	}
-
-	logger.Info("migrations completed successfully",
-		slog.String("migrations_dir", cfg.Migration.Dir))
 
 	return pool, nil
 }
