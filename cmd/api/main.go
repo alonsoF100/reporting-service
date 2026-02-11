@@ -1,43 +1,77 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"log/slog"
-	"path/filepath"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/alonsoF100/reporting-service/internal/config"
 	"github.com/alonsoF100/reporting-service/internal/logger"
-	"github.com/alonsoF100/reporting-service/internal/parser"
+	"github.com/alonsoF100/reporting-service/internal/repository/postgres"
+	"github.com/alonsoF100/reporting-service/internal/service"
+	"github.com/alonsoF100/reporting-service/internal/transport/handler"
+	"github.com/alonsoF100/reporting-service/internal/transport/server"
 	_ "github.com/alonsoF100/reporting-service/migrations/postgres" // миграции
 )
 
 func main() {
-	// TODO добавить инициализацию зависимостей
 	cfg := config.Load()
+
 	log := logger.Setup(cfg)
 	slog.SetDefault(log)
 
-	fmt.Println("\n=== ТЕСТИРОВАНИЕ ПАРСЕРА ===")
+	slog.Info("starting reporting service",
+		"version", "1.0.0",
+		"input_dir", cfg.Application.Input,
+		"output_dir", cfg.Application.Output,
+	)
 
-	testFile := filepath.Join(cfg.Application.Input, "data.tsv")
-
-	result, err := parser.ParseTSV(testFile)
+	pool, err := postgres.NewPool(cfg)
 	if err != nil {
-		slog.Error("Ошибка парсинга", "error", err)
-		return
+		slog.Error("failed to connect to database", "error", err)
+		os.Exit(1)
 	}
+	defer pool.Close()
 
-	fmt.Printf("Файл: %s\n", result.FileName)
-	fmt.Printf("Сообщений: %d\n\n", len(result.Messages))
+	repo := postgres.New(pool)
+	slog.Info("database connected")
 
-	for i, msg := range result.Messages {
-		if i >= 3 {
-			break
+	deviceService := service.NewDeviceService(repo)
+
+	scanner := service.NewScanner(cfg, repo)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go scanner.Start(ctx)
+	slog.Info("scanner started",
+		"interval", cfg.Application.Period,
+		"workers", cfg.Application.Workers)
+
+	h := handler.New(deviceService)
+	srv := server.New(cfg, h, log)
+
+	go func() {
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+		<-sigChan
+
+		slog.Info("shutting down gracefully...")
+		cancel()
+
+		ctx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer shutdownCancel()
+
+		if err := srv.Server.Shutdown(ctx); err != nil {
+			slog.Error("server shutdown error", "error", err)
 		}
-		fmt.Printf("%d. GUID: %s\n", i+1, msg.UnitGUID)
-		fmt.Printf("   Текст: %s\n", msg.MessageText)
-		fmt.Printf("   Класс: %s\n\n", msg.MessageClass)
-	}
+	}()
 
-	fmt.Println("=== ТЕСТ ЗАВЕРШЕН ===")
+	if err := srv.Start(); err != nil {
+		slog.Error("server stopped", "error", err)
+		os.Exit(1)
+	}
 }
