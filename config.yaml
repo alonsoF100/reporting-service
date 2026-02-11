@@ -23,3 +23,6 @@ application:
   input_dir: "input"
   output_dir: "output"
   scan_period: "30s"
+  queue_size: 100
+  workers: 3
+  max_retries: 3 

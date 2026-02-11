@@ -36,7 +36,10 @@ type MigrationsConfig struct {
 }
 
 type ApplicationConfig struct {
-	Input  string        `mapstructure:"input_dir"`
-	Output string        `mapstructure:"output_dir"`
-	Period time.Duration `mapstructure:"scan_period"`
+	Input      string        `mapstructure:"input_dir"`
+	Output     string        `mapstructure:"output_dir"`
+	Period     time.Duration `mapstructure:"scan_period"`
+	QueueSize  int           `mapstructure:"queue_size"`
+	Workers    int           `mapstructure:"workers"`
+	MaxRetries int           `mapstructure:"max_retries"`
 }
