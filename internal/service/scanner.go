@@ -21,7 +21,7 @@ type Repository interface {
 	// Получить все обработанные файлы
 	GetAllProcessedFiles(ctx context.Context) ([]models.ProcessedFile, error)
 
-	// UpdateFileStatus - обновляет статус файла и сообщение об ошибке
+	// Обновляет статус файла и сообщение об ошибке
 	UpdateFileStatus(ctx context.Context, fileName string, status, errorMsg string) error
 
 	// Сохранить сообщения из файла
