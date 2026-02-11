@@ -3,10 +3,10 @@ package config
 import "time"
 
 type Config struct {
-	Server    ServerConfig     `mapstructure:"server"`
-	Database  DatabaseConfig   `mapstructure:"database"`
-	Logger    LoggerConfig     `mapstructure:"logger"`
-	Migration MigrationsConfig `mapstructure:"migrations"`
+	Server      ServerConfig      `mapstructure:"server"`
+	Database    DatabaseConfig    `mapstructure:"database"`
+	Logger      LoggerConfig      `mapstructure:"logger"`
+	Migration   MigrationsConfig  `mapstructure:"migrations"`
 	Application ApplicationConfig `mapstructure:"application"`
 }
 
@@ -36,7 +36,7 @@ type MigrationsConfig struct {
 }
 
 type ApplicationConfig struct {
-	Input  string    `mapstructure:"input_dir"`
-	Output string    `mapstructure:"output_dir"`
-	Period time.Time `mapstructure:"scan_period"`
+	Input  string        `mapstructure:"input_dir"`
+	Output string        `mapstructure:"output_dir"`
+	Period time.Duration `mapstructure:"scan_period"`
 }

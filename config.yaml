@@ -19,7 +19,7 @@ logger:
 migrations:
   dir: "migrations/postgres"
 
-aapplication:
+application:
   input_dir: "input"
   output_dir: "output"
   scan_period: "30s"
